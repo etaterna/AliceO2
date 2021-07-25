@@ -17,24 +17,10 @@
 using namespace o2;
 using namespace o2::framework;
 
-namespace o2::aod
-{
-namespace pidtracks
-{
-DECLARE_SOA_COLUMN(EtaEmcal, etaemcal, float);
-DECLARE_SOA_COLUMN(PhiEmcal, phiemcal, float);
-DECLARE_SOA_COLUMN(TPCSignal, tpcsignal, float);
-DECLARE_SOA_COLUMN(TOFSignal, tofsignal, float);
-DECLARE_SOA_COLUMN(P, p, float);
-DECLARE_SOA_COLUMN(PDGCode, pdgcode, float);
-} // namespace pidtracks
-DECLARE_SOA_TABLE(PIDTracks, "AOD", "PIDTRACKS", pidtracks::EtaEmcal, pidtracks::PhiEmcal, pidtracks::TPCSignal, pidtracks::TOFSignal, pidtracks::P, pidtracks::PDGCode);
-} //namespace o2::aod
-
 // See https://github.com/saganatt/PID_ML_in_O2 for instructions
 
 struct ApplyOnnxModelTask {
-  Configurable<std::string> onnxFileConf{"ONNX file", "/home/maja/CERN_part/CERN/PID_ML_in_O2/models/Simple_example.onnx", "ONNX file"};
+  Configurable<std::string> onnxFileConf{"ONNX file", "/home/monika/PID_ML_in_O2/models/Simple_example.onnx", "ONNX file"};
   std::string onnxFile = (std::string)onnxFileConf;
 
   std::vector<std::string> input_names;
@@ -125,23 +111,8 @@ struct ApplyOnnxModelTask {
   }
 };
 
-struct CreateTrainingTable {
-  using BigTracksMC = soa::Join<aod::FullTracks, aod::McTrackLabels>;
-
-  Produces<aod::PIDTracks> pidTracksTable;
-  void process(BigTracksMC const& tracks, aod::McParticles const& mctracks)
-  {
-
-    for (const auto& track : tracks) {
-      const auto mcParticle = track.mcParticle();
-      pidTracksTable(track.trackEtaEmcal(), track.trackPhiEmcal(), track.tpcSignal(), track.tofSignal(), track.p(), mcParticle.pdgCode());
-    }
-  }
-};
-
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
   return WorkflowSpec{
-    //  adaptAnalysisTask<ApplyOnnxModelTask>(cfgc)};
-    adaptAnalysisTask<CreateTrainingTable>(cfgc)};
+    adaptAnalysisTask<ApplyOnnxModelTask>(cfgc)};
 }

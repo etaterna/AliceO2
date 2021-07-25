@@ -234,3 +234,9 @@ o2_add_dpl_workflow(pid-with-onnx
                   JOB_POOL analysis
                   PUBLIC_LINK_LIBRARIES O2::Framework O2::AnalysisCore ONNXRuntime::ONNXRuntime
                   COMPONENT_NAME AnalysisTutorial)
+
+o2_add_dpl_workflow(pid-producer
+                  SOURCES src/pidProducer.cxx
+                  JOB_POOL analysis
+                  PUBLIC_LINK_LIBRARIES O2::Framework O2::AnalysisCore
+                  COMPONENT_NAME AnalysisTutorial)
