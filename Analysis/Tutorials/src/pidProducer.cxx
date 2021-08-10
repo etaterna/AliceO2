@@ -18,11 +18,13 @@ namespace o2::aod
 {
 namespace pidtracks
 {
-DECLARE_SOA_COLUMN(EtaEmcal, etaemcal, float);
-DECLARE_SOA_COLUMN(PhiEmcal, phiemcal, float);
+//DECLARE_SOA_COLUMN(EtaEmcal, etaemcal, float);
+//DECLARE_SOA_COLUMN(PhiEmcal, phiemcal, float);
 DECLARE_SOA_COLUMN(TPCSignal, tpcsignal, float);
 DECLARE_SOA_COLUMN(TOFSignal, tofsignal, float);
-DECLARE_SOA_COLUMN(P, p, float);
+DECLARE_SOA_COLUMN(Px, px, float);
+DECLARE_SOA_COLUMN(Py, py, float);
+DECLARE_SOA_COLUMN(Pz, pz, float);
 DECLARE_SOA_COLUMN(PDGCode, pdgcode, float);
 } // namespace pidtracks
 DECLARE_SOA_TABLE(PIDTracks, "AOD", "PIDTRACKS", pidtracks::EtaEmcal, pidtracks::PhiEmcal, pidtracks::TPCSignal, pidtracks::TOFSignal, pidtracks::P, pidtracks::PDGCode);
@@ -37,7 +39,7 @@ struct CreateTrainingTable {
 
     for (const auto& track : tracks) {
       const auto mcParticle = track.mcParticle();
-      pidTracksTable(track.trackEtaEmcal(), track.trackPhiEmcal(), track.tpcSignal(), track.tofSignal(), track.p(), mcParticle.pdgCode());
+      pidTracksTable(track.trackEtaEmcal(), track.trackPhiEmcal(), track.tpcSignal(), track.tofSignal(), track.px(), track.py(), track.pz(), mcParticle.pdgCode());
     }
   }
 };
