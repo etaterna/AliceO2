@@ -35,8 +35,9 @@ DECLARE_SOA_COLUMN(Sign,sign,float);
 //DECLARE_SOA_COLUMN(DcaXY, dcaXY, float);
 //DECLARE_SOA_COLUMN(DcaZ, dcaZ, float);
 //DECLARE_SOA_COLUMN(PdgCode, pdgCode, int);
+DECLARE_SOA_COLUMN(IsPhysicalPrimary, isPhysicalPrimary, uint8_t);
 } // namespace pidtracks
-DECLARE_SOA_TABLE(PIDTracksMC, "AOD", "PIDTRACKSMC", aod::track::TPCSignal, aod::track::TOFSignal, pidtracks::Px, pidtracks::Py, pidtracks::Pz, pidtracks::Sign, aod::track::X, aod::track::Y, aod::track::Z, aod::track::Alpha, aod::track::TrackType, aod::track::TPCNClsShared, aod::track::DcaXY, aod::track::DcaZ, aod::mcparticle::PdgCode);
+DECLARE_SOA_TABLE(PIDTracksMC, "AOD", "PIDTRACKSMC", aod::track::TPCSignal, aod::track::TOFSignal, pidtracks::Px, pidtracks::Py, pidtracks::Pz, pidtracks::Sign, aod::track::X, aod::track::Y, aod::track::Z, aod::track::Alpha, aod::track::TrackType, aod::track::TPCNClsShared, aod::track::DcaXY, aod::track::DcaZ, aod::mcparticle::PdgCode, pidtracks::IsPhysicalPrimary);
 DECLARE_SOA_TABLE(PIDTracksReal, "AOD", "PIDTRACKSREAL", aod::track::TPCSignal, aod::track::TOFSignal, pidtracks::Px, pidtracks::Py, pidtracks::Pz, pidtracks::Sign, aod::track::X, aod::track::Y, aod::track::Z, aod::track::Alpha, aod::track::TrackType, aod::track::TPCNClsShared, aod::track::DcaXY, aod::track::DcaZ);
 } //namespace o2::aod
 
@@ -48,23 +49,28 @@ void customize(std::vector<o2::framework::ConfigParamSpec>& workflowOptions)
 
 #include "Framework/runDataProcessing.h"
 
-struct CreateTableMC {
-  using BigTracksMC = soa::Join<aod::FullTracks, aod::TracksExtended, aod::McTrackLabels>;
-
+struct CreateTableMc {
   Produces<aod::PIDTracksMC> pidTracksTable;
+
+  Filter trackFilter = aod::track::isGlobalTrack == (uint8_t) true;
+  using BigTracksMC = soa::Filtered<soa::Join<aod::FullTracks, aod::TracksExtended, aod::TrackSelection, aod::McTrackLabels>>;
+
   void process(BigTracksMC const& tracks, aod::McParticles const& mctracks)
   {
     for (const auto& track : tracks) {
       const auto mcParticle = track.mcParticle();
-      pidTracksTable(track.tpcSignal(), track.tofSignal(), track.px(), track.py(), track.pz(), track.sign(), track.x(), track.y(), track.z(), track.alpha(), track.trackType(), track.tpcNClsShared(), track.dcaXY(), track.dcaZ(), mcParticle.pdgCode());
+      uint8_t isPrimary = (uint8_t)MC::isPhysicalPrimary(mctracks, mcParticle);
+      pidTracksTable(track.tpcSignal(), track.tofSignal(), track.px(), track.py(), track.pz(), track.sign(), track.x(), track.y(), track.z(), track.alpha(), track.trackType(), track.tpcNClsShared(), track.dcaXY(), track.dcaZ(), mcParticle.pdgCode(), isPrimary);
     }
   }
 };
 
 struct CreateTableReal {
-  using BigTracks = soa::Join<aod::FullTracks, aod::TracksExtended>;
-
   Produces<aod::PIDTracksReal> pidTracksTable;
+
+  Filter trackFilter = aod::track::isGlobalTrack == (uint8_t) true;
+  using BigTracks = soa::Filtered<soa::Join<aod::FullTracks, aod::TracksExtended, aod::TrackSelection>>;
+
   void process(BigTracks const& tracks)
   {
     for (const auto& track : tracks) {
@@ -78,7 +84,7 @@ WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
   const bool doMC = cfgc.options().get<bool>("doMC");
   if (doMC) {
     return WorkflowSpec{
-      adaptAnalysisTask<CreateTableMC>(cfgc)};
+      adaptAnalysisTask<CreateTableMc>(cfgc)};
   } else {
     return WorkflowSpec{
       adaptAnalysisTask<CreateTableReal>(cfgc)};
